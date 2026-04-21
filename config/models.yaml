@@ -1,0 +1,39 @@
+models:
+  main:
+    name: "qwen3.6:35b-a3b-q4_K_M"
+    description: "Qwen3.6 35B MoE (3B active) - メインエージェンティックコーディング"
+    active_params: "3B"
+    vram_estimate: "~14GB"
+    use_for:
+      - planning
+      - coding
+      - debugging
+      - testing
+      - review
+
+  fast:
+    name: "qwen3.5:9b"
+    description: "Qwen3.5 9B Dense - 高速応答・単純タスク"
+    vram_estimate: "~6GB"
+    use_for:
+      - quick_answer
+      - code_completion
+      - simple_edit
+
+  vision:
+    name: "gemma4:26b"
+    description: "Gemma 4 26B MoE (4B active) - マルチモーダル対応"
+    active_params: "4B"
+    vram_estimate: "~15.6GB"
+    use_for:
+      - screenshot_analysis
+      - ui_review
+      - visual_bug_report
+
+routing_rules:
+  - condition: "task contains image or screenshot"
+    model: vision
+  - condition: "task is simple question or completion"
+    model: fast
+  - condition: "default"
+    model: main

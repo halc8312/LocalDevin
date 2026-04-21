@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=32768
+      - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_HOST=0.0.0.0:11434
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8200:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  ollama_data:
+  chroma_data:

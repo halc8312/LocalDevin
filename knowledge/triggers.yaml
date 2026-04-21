@@ -1,0 +1,10 @@
+# Knowledge Base トリガー定義
+
+triggers:
+  # キー: Markdownファイル名（拡張子なし）
+  # 値: セマンティック検索で使用されるトリガー文
+  example-knowledge: "example knowledge trigger phrase"
+  # 例:
+  # stripe-integration: "Stripe payment integration setup"
+  # docker-deployment: "Deploy application with Docker"
+  # pytest-mocking: "How to mock external dependencies in pytest"
