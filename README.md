@@ -95,7 +95,7 @@ flowchart TD
 ### 2. リポジトリのクローン
 
 ```bash
-git clone https://github.com/yourorg/LocalDevin.git
+git clone https://github.com/halc8312/LocalDevin.git
 cd LocalDevin
 ```
 
