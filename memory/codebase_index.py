@@ -122,9 +122,8 @@ class CodebaseIndex:
 
         chunks: list[dict[str, object]] = []
         try:
-            from tree_sitter_languages import get_language, get_parser
+            from tree_sitter_languages import get_parser
 
-            language = get_language(lang)
             parser = get_parser(lang)
             tree = parser.parse(source.encode())
 

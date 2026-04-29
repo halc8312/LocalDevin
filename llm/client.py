@@ -41,6 +41,10 @@ class LLMClient:
         self._token_tracker = token_tracker
         self._session_id = session_id
 
+    def set_session_id(self, session_id: str | None) -> None:
+        """Update the session ID used for token tracking."""
+        self._session_id = session_id
+
     async def chat(
         self,
         messages: list[dict[str, Any]],

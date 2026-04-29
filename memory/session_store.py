@@ -123,6 +123,34 @@ class SessionStore:
                     (status, completed_at, session_id),
                 )
 
+    async def update_total_tokens(self, session_id: str, total_tokens: int) -> None:
+        """Persist the total token count for a session.
+
+        Args:
+            session_id: Target session ID.
+            total_tokens: Aggregated token count to store.
+        """
+        async with self._lock:
+            with self._get_conn() as conn:
+                conn.execute(
+                    "UPDATE sessions SET total_tokens=? WHERE id=?",
+                    (total_tokens, session_id),
+                )
+
+    async def get_session(self, session_id: str) -> dict[str, object] | None:
+        """Return a single session row if it exists."""
+        async with self._lock:
+            with self._get_conn() as conn:
+                row = conn.execute(
+                    """
+                    SELECT id, task, status, repo_path, created_at,
+                           completed_at, total_tokens
+                    FROM sessions WHERE id = ?
+                    """,
+                    (session_id,),
+                ).fetchone()
+        return dict(row) if row is not None else None
+
     async def record_event(
         self,
         session_id: str,

@@ -13,41 +13,73 @@ Copilot should keep this file updated during the long-running request.
 
 ## Current Phase
 
-- Not started by Copilot yet.
+- Phase 6 / documentation wrap-up.
 
 ## Completed Work
 
-- None yet.
+- Installed local quality-gate tooling (`pytest`, `pytest-asyncio`, `ruff`, `mypy`) to run the repo checks in this environment.
+- Fixed the existing ruff cleanup issues across the repo.
+- Added `core/service.py` with a reusable `SessionService` plus `build_session_service(...)`.
+- Reworked `cli/main.py` into thin command wrappers over `SessionService`.
+- Added `tools/router.py` and routed shell/editor/git/browser/search through a shared runtime router.
+- Added `memory/playbook_loader.py` and wired playbooks, knowledge items, and code-search snippets into planner context.
+- Persisted session lifecycle status transitions and token totals through `SessionStore`.
+- Updated `core/orchestrator.py` to record session/context/approval/replan/PR events and to handle `ToolResult` correctly when creating PRs.
+- Wired scheduler execution through the service runtime and added `localdevin schedule ... --run` for a long-lived scheduler loop.
+- Added focused tests for service wiring, playbook loading, tool routing, git flow, and scheduler behavior.
 
 ## Files Changed
 
-- None yet.
+- `README.md`
+- `cli/main.py`
+- `core/executor.py`
+- `core/orchestrator.py`
+- `core/planner.py`
+- `core/service.py`
+- `docs/copilot-devin-parity/PROGRESS.md`
+- `integrations/scheduler.py`
+- `llm/client.py`
+- `memory/codebase_index.py`
+- `memory/playbook_loader.py`
+- `memory/session_store.py`
+- `tests/conftest.py`
+- `tests/test_git_tool.py`
+- `tests/test_scheduler.py`
+- `tests/test_service.py`
+- `tests/test_tool_router.py`
+- `tools/git_tool.py`
+- `tools/router.py`
 
 ## Commands Run
 
-- None yet.
+- `python3 -m pip install pytest pytest-asyncio ruff mypy pydantic pydantic-settings typer rich gitpython PyGithub openai pyyaml httpx apscheduler slack-bolt`
+- `python3 -m pytest tests/ -q --basetemp .pytest_tmp`
+- `python3 -m ruff check .`
+- `python3 -m ruff check . --fix`
+- `python3 -m pytest tests/test_service.py tests/test_tool_router.py -q --basetemp .pytest_tmp`
+- `python3 -m mypy .`
 
 ## Test Results
 
-- None yet.
+- `python3 -m pytest tests/ -q --basetemp .pytest_tmp` ✅ (`106 passed`)
+- `python3 -m ruff check .` ✅
+- `python3 -m mypy .` ❌ (pre-existing broad typing debt remains across multiple modules)
 
 ## Open Blockers
 
-- None yet.
+- `mypy` still reports repository-wide typing issues outside the scope of this vertical slice.
 
 ## Remaining Risks
 
-- The project currently has MVP-level runtime wiring.
-- Some claimed README features are only partially implemented.
-- Long-running scheduler and browser/IDE parity are not yet real.
-- Local model quality may limit true Devin-level behavior even after runtime improvements.
+- Executor/replanner still need a fuller multi-turn continuation loop to match the parity target.
+- Scheduler jobs are still in-memory only and do not survive process restart.
+- Browser tooling is still HTTP-fetch based rather than interactive automation.
+- Repository-wide mypy compliance remains incomplete.
 
 ## Next Recommended Action
 
-Start with Phase 0 and Phase 1:
+Continue with the agent loop phases:
 
-1. Fix ruff cleanup.
-2. Add `SessionService`.
-3. Extract `ToolRouter`.
-4. Keep tests passing.
-
+1. Add bounded multi-iteration execution per plan step.
+2. Let replanning decisions modify execution flow and continue safely.
+3. Persist scheduler jobs and add a browser automation implementation.

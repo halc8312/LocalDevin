@@ -1,7 +1,6 @@
 """File editor tool – atomic read/write/patch with sandboxing."""
 
 import logging
-import os
 import shutil
 from pathlib import Path
 

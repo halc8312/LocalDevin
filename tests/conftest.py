@@ -1,7 +1,7 @@
 """Shared pytest fixtures for LocalDevin tests."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from config.settings import Settings
 
@@ -53,4 +53,5 @@ def mock_tool_router() -> AsyncMock:
 
     router = AsyncMock()
     router.execute.return_value = ToolResult(success=True, output="mock output")
+    router.get_tool.return_value = None
     return router

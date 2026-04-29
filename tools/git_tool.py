@@ -1,6 +1,7 @@
 """Git and GitHub operations tool."""
 
 import logging
+import re
 from pathlib import Path
 
 from core.models import ToolResult
@@ -12,6 +13,10 @@ _CONVENTIONAL_PREFIXES = (
     "feat:", "fix:", "docs:", "style:", "refactor:",
     "perf:", "test:", "chore:", "ci:", "build:", "revert:",
 )
+
+# Regex patterns for GitHub remote URL parsing
+_HTTPS_PATTERN = re.compile(r"https://github\.com/([^/]+)/([^/]+?)(?:\.git)?$")
+_SSH_PATTERN = re.compile(r"git@github\.com:([^/]+)/([^/]+?)(?:\.git)?$")
 
 
 class GitTool(BaseTool):
@@ -45,8 +50,8 @@ class GitTool(BaseTool):
         """Dispatch to the requested Git action.
 
         Args:
-            action: One of ``create_branch``, ``commit``, ``create_pr``,
-                ``get_diff``.
+            action: One of ``create_branch``, ``commit``, ``push_branch``,
+                ``create_pr``, ``get_diff``.
             **kwargs: Action-specific arguments.
 
         Returns:
@@ -55,12 +60,16 @@ class GitTool(BaseTool):
         dispatch: dict[str, object] = {
             "create_branch": self.create_branch,
             "commit": self.commit,
+            "push_branch": self.push_branch,
             "create_pr": self.create_pr,
             "get_diff": self.get_diff,
         }
         handler = dispatch.get(action)
         if handler is None:
-            return self._error(f"Unknown action: {action}", list(dispatch.keys()))
+            return self._error(
+                f"Unknown action: {action}",
+                [f"Available actions: {', '.join(sorted(dispatch.keys()))}"]
+            )
         return await handler(**kwargs)  # type: ignore[operator]
 
     async def create_branch(self, name: str = "", **_: object) -> ToolResult:
@@ -111,12 +120,95 @@ class GitTool(BaseTool):
                 repo.index.add(files)
             else:
                 repo.git.add(A=True)
-            if not repo.index.diff("HEAD"):
+
+            if not repo.index.diff("HEAD") and not repo.untracked_files:
+                logger.info("No changes to commit in %s", self._repo_path)
                 return self._success("Nothing to commit – working tree is clean")
-            repo.index.commit(message)
-            return self._success(f"Committed: {message}")
+            
+            commit = repo.index.commit(message)
+            logger.info("Created commit %s: %s", commit.hexsha[:7], message)
+            return self._success(f"Committed {commit.hexsha[:7]}: {message}")
+        except git.exc.GitCommandError as exc:
+            logger.error("Git commit failed: %s", exc)
+            return self._error(f"Git command failed: {exc}")
         except Exception as exc:
+            logger.error("Commit failed: %s", exc)
             return self._error(str(exc))
+
+    async def push_branch(
+        self, remote: str = "origin", force: bool = False, **_: object
+    ) -> ToolResult:
+        """Push the current branch to a remote.
+
+        Args:
+            remote: Remote name to push to (default: ``origin``).
+            force: Whether to force-push.
+
+        Returns:
+            ToolResult indicating success or failure.
+        """
+        try:
+            import git
+
+            repo = git.Repo(self._repo_path)
+            current_branch = repo.active_branch.name
+            
+            # Check if remote exists
+            if remote not in [r.name for r in repo.remotes]:
+                return self._error(
+                    f"Remote '{remote}' not found",
+                    [f"Available remotes: {', '.join(r.name for r in repo.remotes)}"]
+                )
+            
+            remote_obj = repo.remote(remote)
+            push_args = [f"{current_branch}:{current_branch}"]
+            if force:
+                push_args.insert(0, "--force")
+            
+            info = remote_obj.push(*push_args)
+            if info and info[0].flags & git.PushInfo.ERROR:
+                logger.error("Push failed: %s", info[0].summary)
+                return self._error(
+                    f"Push failed: {info[0].summary}",
+                    ["Check if the branch exists on remote", "Try force=True if appropriate"]
+                )
+            
+            logger.info("Pushed branch %s to %s", current_branch, remote)
+            return self._success(f"Pushed branch '{current_branch}' to '{remote}'")
+        except git.exc.GitCommandError as exc:
+            logger.error("Git push failed: %s", exc)
+            return self._error(
+                f"Git push failed: {exc}",
+                ["Check network connectivity", "Verify push permissions"]
+            )
+        except Exception as exc:
+            logger.error("Push failed: %s", exc)
+            return self._error(str(exc))
+
+    def _parse_github_remote(self, remote_url: str) -> str | None:
+        """Extract owner/repo slug from a GitHub remote URL.
+
+        Supports both HTTPS and SSH formats:
+        - https://github.com/owner/repo[.git]
+        - git@github.com:owner/repo[.git]
+
+        Args:
+            remote_url: The Git remote URL.
+
+        Returns:
+            The owner/repo slug, or None if parsing fails.
+        """
+        # Try HTTPS pattern
+        match = _HTTPS_PATTERN.match(remote_url)
+        if match:
+            return f"{match.group(1)}/{match.group(2)}"
+        
+        # Try SSH pattern
+        match = _SSH_PATTERN.match(remote_url)
+        if match:
+            return f"{match.group(1)}/{match.group(2)}"
+        
+        return None
 
     async def create_pr(
         self, title: str = "", body: str = "", base: str = "", **_: object
@@ -145,11 +237,22 @@ class GitTool(BaseTool):
             from github import Github
 
             repo = git.Repo(self._repo_path)
+            
+            # Check if origin remote exists
+            if "origin" not in [r.name for r in repo.remotes]:
+                return self._error(
+                    "No 'origin' remote found",
+                    ["Add a remote with: git remote add origin <url>"]
+                )
+            
             remote_url: str = repo.remotes.origin.url
-            # Extract "owner/repo" from the remote URL
-            if remote_url.endswith(".git"):
-                remote_url = remote_url[:-4]
-            repo_slug = "/".join(remote_url.split("/")[-2:])
+            repo_slug = self._parse_github_remote(remote_url)
+            
+            if not repo_slug:
+                return self._error(
+                    f"Could not parse GitHub repository from remote URL: {remote_url}",
+                    ["Ensure remote URL is a valid GitHub HTTPS or SSH URL"]
+                )
 
             gh = Github(self._github_token)
             gh_repo = gh.get_repo(repo_slug)
@@ -157,8 +260,13 @@ class GitTool(BaseTool):
             pr = gh_repo.create_pull(
                 title=title, body=body, head=current_branch, base=base
             )
+            logger.info("Created PR: %s", pr.html_url)
             return self._success(pr.html_url)
+        except git.exc.GitCommandError as exc:
+            logger.error("Git operation failed: %s", exc)
+            return self._error(f"Git operation failed: {exc}")
         except Exception as exc:
+            logger.error("PR creation failed: %s", exc)
             return self._error(str(exc))
 
     async def get_diff(self, base: str = "", **_: object) -> ToolResult:

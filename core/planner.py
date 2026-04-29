@@ -196,4 +196,6 @@ class Planner:
             parts.append(f"## SKILL.md\n{skill}")
         if playbook := context.get("playbook"):
             parts.append(f"## Playbook\n{playbook}")
+        if search_results := context.get("search_results"):
+            parts.append(f"## Code Search Results\n{search_results}")
         return "\n\n".join(parts)

@@ -51,7 +51,7 @@ class TestParsePlan:
 
 class TestValidateDag:
     def test_valid_dag_passes(self) -> None:
-        from core.models import PlanStep, SessionStatus
+        from core.models import PlanStep
 
         steps = [
             PlanStep(id="a", description="A", tools=[ToolType.SHELL], size=StepSize.SMALL),
