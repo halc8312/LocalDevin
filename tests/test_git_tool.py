@@ -152,6 +152,26 @@ class TestGitToolCommit:
         assert "feat: update test file" in result.output
 
     @pytest.mark.asyncio
+    async def test_commit_stages_untracked_files(self, tmp_path: Path) -> None:
+        """Test that untracked files are committed when staging all files."""
+        import git
+
+        repo = git.Repo.init(tmp_path)
+        tracked_file = tmp_path / "tracked.txt"
+        tracked_file.write_text("initial")
+        repo.index.add([str(tracked_file)])
+        repo.index.commit("Initial commit")
+
+        untracked_file = tmp_path / "new.txt"
+        untracked_file.write_text("new file")
+
+        tool = GitTool(repo_path=str(tmp_path))
+        result = await tool.commit(message="feat: add untracked file")
+
+        assert result.success
+        assert "new.txt" not in repo.untracked_files
+
+    @pytest.mark.asyncio
     async def test_commit_specific_files(self, tmp_path: Path) -> None:
         """Test committing specific files."""
         import git

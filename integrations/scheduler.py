@@ -4,6 +4,7 @@ import asyncio
 import logging
 import signal
 from datetime import datetime
+from types import FrameType
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -208,7 +209,7 @@ class Scheduler:
         # Set up signal handlers for graceful shutdown
         stop_event = asyncio.Event()
         
-        def signal_handler(signum: int, frame: object) -> None:
+        def signal_handler(signum: int, _frame: FrameType | None) -> None:
             logger.info("Received signal %s, shutting down...", signum)
             stop_event.set()
 

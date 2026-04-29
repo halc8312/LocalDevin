@@ -6,9 +6,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from core.models import ToolResult
+from core.models import Plan, ToolResult
 from core.orchestrator import Orchestrator
 from core.service import SessionService, build_session_service
+from core.session import Session
 from memory.playbook_loader import PlaybookLoader
 
 PLAN_JSON = json.dumps(
@@ -96,8 +97,8 @@ class TestOrchestratorPersistence:
         mock_llm = AsyncMock()
         mock_llm.chat.side_effect = [f"```json\n{PLAN_JSON}\n```", f"```json\n{REACT_JSON}\n```"]
         mock_llm.set_session_id = MagicMock()
-        tool_router = AsyncMock()
-        tool_router.execute.return_value = ToolResult(success=True, output="ok")
+        tool_router = MagicMock()
+        tool_router.execute = AsyncMock(return_value=ToolResult(success=True, output="ok"))
         tool_router.get_tool.return_value = None
         orchestrator = Orchestrator(
             settings=settings,
@@ -116,3 +117,48 @@ class TestOrchestratorPersistence:
         assert statuses == ["planning", "awaiting_approval", "executing", "completed"]
         mock_session_store.update_total_tokens.assert_awaited()
         assert session.status.value == "completed"
+
+    @pytest.mark.asyncio
+    async def test_create_pr_stops_when_commit_fails(self, settings, mock_session_store) -> None:
+        settings.github_token = "token"
+        orchestrator = Orchestrator(
+            settings=settings,
+            llm_client=AsyncMock(),
+            tool_router=MagicMock(),
+            session_store=mock_session_store,
+        )
+        git_tool = AsyncMock()
+        git_tool.create_branch.return_value = ToolResult(success=True, output="branch")
+        git_tool.commit.return_value = ToolResult(success=False, output="", error="commit failed")
+        orchestrator._tool_router.get_tool.return_value = git_tool
+
+        result = await orchestrator._create_pr(
+            session=Session(task="task", repo_path="/repo"),
+            plan=Plan(task_summary="Task", completion_criteria=["Done"], steps=[]),
+        )
+
+        assert result is None
+        git_tool.push_branch.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_create_pr_stops_when_push_fails(self, settings, mock_session_store) -> None:
+        settings.github_token = "token"
+        orchestrator = Orchestrator(
+            settings=settings,
+            llm_client=AsyncMock(),
+            tool_router=MagicMock(),
+            session_store=mock_session_store,
+        )
+        git_tool = AsyncMock()
+        git_tool.create_branch.return_value = ToolResult(success=True, output="branch")
+        git_tool.commit.return_value = ToolResult(success=True, output="Committed abc123: feat")
+        git_tool.push_branch.return_value = ToolResult(success=False, output="", error="push failed")
+        orchestrator._tool_router.get_tool.return_value = git_tool
+
+        result = await orchestrator._create_pr(
+            session=Session(task="task", repo_path="/repo"),
+            plan=Plan(task_summary="Task", completion_criteria=["Done"], steps=[]),
+        )
+
+        assert result is None
+        git_tool.create_pr.assert_not_called()

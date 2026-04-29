@@ -237,7 +237,7 @@ class SessionService:
             context["playbook"] = playbook_content
             metadata["playbook"] = playbook
 
-        knowledge_items = self._knowledge_base.get_relevant(
+        knowledge_items: list[object] = self._knowledge_base.get_relevant(
             task=task,
             repo=Path(repo_path).name,
         )
