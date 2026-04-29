@@ -91,6 +91,7 @@ class TestOrchestratorPersistence:
     async def test_run_session_persists_statuses(self, settings, mock_session_store) -> None:
         mock_llm = AsyncMock()
         mock_llm.chat.side_effect = [f"```json\n{PLAN_JSON}\n```", f"```json\n{REACT_JSON}\n```"]
+        mock_llm.set_session_id = MagicMock()
         tool_router = AsyncMock()
         tool_router.execute.return_value = ToolResult(success=True, output="ok")
         tool_router.get_tool.return_value = None

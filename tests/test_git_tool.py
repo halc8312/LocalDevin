@@ -79,25 +79,21 @@ class TestGitToolCreateBranch:
 
     @pytest.mark.asyncio
     async def test_create_branch_already_exists(self, tmp_path: Path) -> None:
-        """Test creating a branch that already exists."""
+        """Test creating a branch when Git raises an error."""
         import git
-        
+
         repo = git.Repo.init(tmp_path)
         test_file = tmp_path / "test.txt"
         test_file.write_text("initial")
         repo.index.add([str(test_file)])
         repo.index.commit("Initial commit")
-        repo.create_head("feature/test")
-        
+
         tool = GitTool(repo_path=str(tmp_path))
-        # GitPython's create_head will reset the branch if it exists,
-        # so this actually succeeds. We'll test the actual Git error case
-        # by trying to create a branch with the same name as HEAD
-        result = await tool.create_branch(name="main")
-        
-        # This should fail because we're trying to create a branch
-        # that points to HEAD
-        assert not result.success or result.success
+        with patch.object(repo, "create_head", side_effect=git.exc.GitCommandError("branch", 1)):
+            with patch("git.Repo", return_value=repo):
+                result = await tool.create_branch(name="feature/test")
+
+        assert result.success is False
 
 
 class TestGitToolCommit:

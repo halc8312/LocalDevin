@@ -219,7 +219,7 @@ class Scheduler:
             await stop_event.wait()
         finally:
             self.stop()
-            logger.info("Scheduler stopped gracefully")
+            logger.info("Scheduler loop exited")
 
     async def _run_task(
         self,

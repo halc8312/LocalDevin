@@ -1,7 +1,6 @@
 """Main orchestrator – coordinates the full LocalDevin session lifecycle."""
 
 import logging
-import inspect
 
 from rich.console import Console
 from rich.panel import Panel
@@ -88,9 +87,7 @@ class Orchestrator:
             session_id=session.session_id,
         )
         if hasattr(self._llm, "set_session_id"):
-            maybe_awaitable = self._llm.set_session_id(session.session_id)  # type: ignore[attr-defined]
-            if inspect.isawaitable(maybe_awaitable):
-                await maybe_awaitable
+            self._llm.set_session_id(session.session_id)  # type: ignore[attr-defined]
         await self._store.record_event(
             session.session_id,
             "session",
