@@ -131,7 +131,7 @@ localdevin status
 # リポジトリに Stripe 決済機能を追加する
 localdevin run "Add Stripe payment integration" --repo ./my-project
 
-# Playbook を指定して実行
+# Playbook を指定して実行（playbooks/*.md が planner context に読み込まれます）
 localdevin run "Fix failing tests" --repo ./my-project --playbook test-coverage
 ```
 
@@ -158,6 +158,9 @@ localdevin index --repo ./my-project
 ```bash
 # 毎朝9時にテストカバレッジ向上タスクを実行
 localdevin schedule coverage "0 9 * * *" "Improve test coverage" --repo ./my-project
+
+# ジョブ登録後にそのままスケジューラーを常駐実行
+localdevin schedule coverage "0 9 * * *" "Improve test coverage" --repo ./my-project --run
 ```
 
 ### セッションを分析する

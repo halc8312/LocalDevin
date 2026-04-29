@@ -2,10 +2,9 @@
 
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from config.settings import Settings
-from core.models import ReviewResult
 from review.pr_reviewer import PRReviewer, _parse_review
 
 

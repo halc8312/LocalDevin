@@ -1,11 +1,10 @@
 """Tests for memory/codebase_index.py."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from memory.codebase_index import CodebaseIndex, _extract_name
+from memory.codebase_index import CodebaseIndex
 
 
 class TestCodebaseIndex:

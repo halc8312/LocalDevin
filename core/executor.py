@@ -220,7 +220,10 @@ class Executor:
 
             # Execute the tool
             tool_result = await self._tool_router.execute(  # type: ignore[attr-defined]
-                tool_call.tool, **tool_call.args
+                tool_call.tool,
+                session_id=session_id,
+                step_id=step.id,
+                **tool_call.args,
             )
 
             tokens = getattr(raw, "__tokens__", 0)

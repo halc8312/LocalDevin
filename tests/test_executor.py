@@ -2,7 +2,7 @@
 
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from config.settings import Settings
 from core.executor import Executor, _topological_sort

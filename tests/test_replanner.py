@@ -2,7 +2,7 @@
 
 import json
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from config.settings import Settings
 from core.models import Plan, PlanStep, ReplanDecision, StepSize, ToolType

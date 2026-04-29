@@ -1,11 +1,8 @@
 """Tests for memory/knowledge_base.py."""
 
-import tempfile
 from pathlib import Path
 
-import pytest
 
-from core.models import KnowledgeItem
 from memory.knowledge_base import KnowledgeBase
 
 

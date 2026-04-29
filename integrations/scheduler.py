@@ -237,8 +237,11 @@ class Scheduler:
         logger.info("Scheduled task starting: %s", task)
         session_id = "unknown"
         try:
+            run_kwargs: dict[str, object] = {"task": task, "repo_path": repo_path}
+            if playbook is not None:
+                run_kwargs["playbook"] = playbook
             session = await self._orchestrator.run_session(  # type: ignore[attr-defined]
-                task=task, repo_path=repo_path
+                **run_kwargs,
             )
             session_id = getattr(session, "session_id", "unknown")
             total_tokens = getattr(session, "total_tokens", 0)

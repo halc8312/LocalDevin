@@ -2,7 +2,7 @@
 
 import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from core.models import ToolResult
 from tools.git_tool import GitTool
@@ -323,7 +323,6 @@ class TestGitToolCreatePR:
     async def test_create_pr_success(self, tmp_path: Path) -> None:
         """Test successful PR creation with mocked GitHub API."""
         import git
-        from unittest.mock import MagicMock
         
         repo = git.Repo.init(tmp_path)
         test_file = tmp_path / "test.txt"
