@@ -1,6 +1,21 @@
 """Central tool router for LocalDevin runtime execution."""
 
+from typing import Protocol
+
 from core.models import ToolResult, ToolType
+
+
+class SessionEventStore(Protocol):
+    """Protocol for session event recording used by the tool router."""
+
+    async def record_event(
+        self,
+        session_id: str,
+        step_id: str,
+        event_type: str,
+        data: object,
+    ) -> None:
+        """Persist a session event."""
 
 
 class ToolRouter:
@@ -10,7 +25,7 @@ class ToolRouter:
         self,
         tools: dict[ToolType, object],
         named_tools: dict[str, object] | None = None,
-        session_store: object | None = None,
+        session_store: SessionEventStore | None = None,
     ) -> None:
         """Initialise the tool router.
 
@@ -92,6 +107,6 @@ class ToolRouter:
         if session_id is None or self._store is None:
             return
         try:
-            await self._store.record_event(session_id, step_id, event_type, data)  # type: ignore[attr-defined]
+            await self._store.record_event(session_id, step_id, event_type, data)
         except Exception:
             return

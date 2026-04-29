@@ -30,7 +30,7 @@ class PlaybookLoader:
         path = self._playbooks_dir / filename
         if not path.exists():
             raise ValueError(
-                f"Playbook '{name}' not found in '{self._playbooks_dir}'."
+                f"Playbook '{name}' not found in '{self._playbooks_dir}'"
             )
         return path.read_text(encoding="utf-8")
 

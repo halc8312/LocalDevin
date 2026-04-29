@@ -66,11 +66,15 @@ class TestSessionService:
         playbooks_dir = tmp_path / "playbooks"
         playbooks_dir.mkdir()
         (playbooks_dir / "bug-triage.md").write_text("# Bug triage")
-        service = SessionService(settings.model_copy(update={"playbooks_dir": str(playbooks_dir)}))
-        service._knowledge_base = MagicMock()  # type: ignore[assignment]
-        service._knowledge_base.get_relevant.return_value = []
-        service._codebase_index = AsyncMock()  # type: ignore[assignment]
-        service._codebase_index.search.return_value = []
+        knowledge_base = MagicMock()
+        knowledge_base.get_relevant.return_value = []
+        codebase_index = AsyncMock()
+        codebase_index.search.return_value = []
+        service = SessionService(
+            settings.model_copy(update={"playbooks_dir": str(playbooks_dir)}),
+            knowledge_base=knowledge_base,
+            codebase_index=codebase_index,
+        )
         dummy = DummyOrchestrator()
         service._build_orchestrator = lambda repo_path: dummy  # type: ignore[method-assign]
 

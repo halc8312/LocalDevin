@@ -120,8 +120,7 @@ class GitTool(BaseTool):
                 repo.index.add(files)
             else:
                 repo.git.add(A=True)
-            
-            # Check if there are any changes to commit
+
             if not repo.index.diff("HEAD") and not repo.untracked_files:
                 logger.info("No changes to commit in %s", self._repo_path)
                 return self._success("Nothing to commit – working tree is clean")

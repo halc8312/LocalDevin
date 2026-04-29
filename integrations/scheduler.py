@@ -211,9 +211,10 @@ class Scheduler:
         def signal_handler(signum: int, frame: object) -> None:
             logger.info("Received signal %s, shutting down...", signum)
             stop_event.set()
-        
+
         signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
+        if hasattr(signal, "SIGTERM"):
+            signal.signal(signal.SIGTERM, signal_handler)
         
         try:
             await stop_event.wait()
