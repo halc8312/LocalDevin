@@ -205,13 +205,13 @@ class Scheduler:
         """
         self.start()
         logger.info("Scheduler running. Press Ctrl+C to stop.")
-        
-        # Set up signal handlers for graceful shutdown
+
         stop_event = asyncio.Event()
-        
+        loop = asyncio.get_running_loop()
+
         def signal_handler(signum: int, _frame: FrameType | None) -> None:
             logger.info("Received signal %s, shutting down...", signum)
-            stop_event.set()
+            loop.call_soon_threadsafe(stop_event.set)
 
         signal.signal(signal.SIGINT, signal_handler)
         if hasattr(signal, "SIGTERM"):

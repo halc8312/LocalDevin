@@ -11,6 +11,7 @@ from integrations.scheduler import Scheduler
 from llm.client import LLMClient
 from llm.token_tracker import TokenTracker
 from memory.codebase_index import CodebaseIndex
+from core.models import KnowledgeItem
 from memory.knowledge_base import KnowledgeBase
 from memory.playbook_loader import PlaybookLoader
 from memory.session_store import SessionStore
@@ -237,7 +238,7 @@ class SessionService:
             context["playbook"] = playbook_content
             metadata["playbook"] = playbook
 
-        knowledge_items: list[object] = self._knowledge_base.get_relevant(
+        knowledge_items: list[KnowledgeItem] = self._knowledge_base.get_relevant(
             task=task,
             repo=Path(repo_path).name,
         )
